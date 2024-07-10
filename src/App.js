@@ -271,6 +271,12 @@ function App() {
               Text
               {isTextBoxVisible && (
                 <div className="flex justify-center items-center absolute top-0 left-[100px] z-30 bg-gray-100">
+                  {/*     z-index: 99;
+    width: 400px;
+    position: absolute;
+    left: 50px;
+    top: 0px;
+    padding: 20px; */}
                   <div className="bg-white p-6 rounded-lg shadow-lg w-80">
                     <div className="text-left">
                       <h2 className="text-xl font-bold mb-4">Text</h2>
