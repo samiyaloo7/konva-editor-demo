@@ -10,6 +10,8 @@ function TextEditor({
   onDelete,
   onDuplicate,
   onToggleLock,
+  bringToFront,
+  sendToBack,
 }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,7 +30,16 @@ function TextEditor({
   return (
     <div className="border-b relative z-50 bg-[#fff] shadow-lg">
       <div className="text-editor flex container mx-auto divide-x  justify-center">
-        <div className="min-w-[206px] flex items-center  rounded-full px-3 pr-5">
+        {/* <div className="min-w-[150px] flex items-center px-3">
+          <input
+            type="text"
+            name="text"
+            value={text.text}
+            className="Text-fild focus:outline-none border-b"
+            onChange={handleChange}
+          />
+        </div> */}
+        <div className="min-w-[150px] flex items-center px-3 pr-5">
           <CiText className="text-[26px] mr-2" />
           <select
             name="fontFamily"
@@ -41,19 +52,10 @@ function TextEditor({
             <option value="Times New Roman">Times New Roman</option>
           </select>
         </div>
-        {/* <div className="min-w-[206px] flex items-center px-3">
-          <CiText className="text-[26px] mr-2" />
-          <input
-            type="text"
-            name="text"
-            value={text.text}
-            className="Text-fild focus:outline-none border-b"
-            onChange={handleChange}
-          />
-        </div> */}
-        <div className="min-w-[50px] flex items-center px-5">
+
+        <div className="min-w-[50px] flex items-center px-2">
           <button
-            className="hover:bg-[#f8f8f8] w-[32px] h-[40px] text-xl font-bold"
+            className="hover:bg-[#f8f8f8] w-[30px] h-[40px] text-xl font-bold"
             onClick={() => handleFontSizeChange(1)}
           >
             +
@@ -61,37 +63,38 @@ function TextEditor({
           <input
             type="number"
             name="fontSize"
-            className="Text-fild focus:outline-none border-b max-w-[50px] text-center text-xl"
+            className="Text-fild focus:outline-none border-b max-w-[40px] text-center text-lg"
             value={text.fontSize}
             onChange={handleChange}
           />
           <button
-            className="hover:bg-[#f8f8f8] w-[32px] h-[40px] text-xl font-bold"
+            className="hover:bg-[#f8f8f8] w-[30px] h-[40px] text-xl font-bold"
             onClick={() => handleFontSizeChange(-1)}
           >
             -
           </button>
         </div>
 
-        <div className="flex gap-5 items-center px-5">
-          <img
+        <div className="flex gap-3 items-center px-2">
+          {/* <img
             src={ColorPiker}
             alt=""
             className="w-[32px] h-[32px] object-contain mx-2"
-          />
-          {/* <input
+          /> */}
+          <input
             type="color"
             name="fill"
             value={text.fill}
             onChange={handleChange}
-          /> */}
+            className="w-[20px] h-[20px] object-contain mx-1"
+          />
 
           <div className="flex items-center">
-            <div className="relative h-[32px] w-[32px]">
+            <div className="relative h-[30px] w-[30px]">
               <input
                 type="checkbox"
                 name="bold"
-                className="h-[32px] w-[32px] absolute top-0 left-0 z-50 opacity-0"
+                className="h-[30px] w-[30px] absolute top-0 left-0 z-50 opacity-0"
                 checked={text.fontStyle && text.fontStyle.includes("bold")}
                 onChange={() => handleToggle("bold")}
               />
@@ -100,7 +103,7 @@ function TextEditor({
                 className={`${
                   text.fontStyle.includes("bold") &&
                   " rounded-full bg-black text-white p-[3px] pb-[5px]"
-                } w-[32px] h-[32px] object-contain mx-4 absolute top-0 -left-[17px]`}
+                } w-[30px] h-[30px] object-contain mx-4 absolute top-0 -left-[17px]`}
               >
                 <BoldText />
               </div>
@@ -108,11 +111,11 @@ function TextEditor({
           </div>
 
           <div className="flex items-center">
-            <div className="relative h-[32px] w-[32px]">
+            <div className="relative h-[30px] w-[30px]">
               <input
                 type="checkbox"
                 name="italic"
-                className="h-[32px] w-[32px] absolute top-0 left-0 z-50 opacity-0"
+                className="h-[30px] w-[30px] absolute top-0 left-0 z-50 opacity-0"
                 checked={text.fontStyle && text.fontStyle.includes("italic")}
                 onChange={() => handleToggle("italic")}
               />
@@ -121,7 +124,7 @@ function TextEditor({
                 className={`${
                   text.fontStyle.includes("italic") &&
                   " rounded-full bg-black text-white p-[5px] pb-[5px]"
-                } w-[32px] h-[32px] object-contain mx-4 absolute top-0 -left-[17px]`}
+                } w-[30px] h-[30px] object-contain mx-4 absolute top-0 -left-[17px]`}
               >
                 <Italic />
               </div>
@@ -176,24 +179,38 @@ function TextEditor({
           </div>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center px-1">
           <button
-            className="px-6 flex gap-2 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
+            className="px-2 flex gap-3 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
             onClick={onDelete}
           >
             Delete
           </button>
           <button
-            className="px-6 flex gap-2 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
+            className="px-2 flex gap-3 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
             onClick={onDuplicate}
           >
             Duplicate
           </button>
           <button
-            className="px-6 flex gap-2 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
+            className="px-2 flex gap-3 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
             onClick={onToggleLock}
           >
             {text.locked ? "Unlock" : "Lock"}
+          </button>
+        </div>
+        <div className="flex items-center px-1">
+          <button
+            className="px-2 flex gap-3 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
+            onClick={sendToBack}
+          >
+            Back
+          </button>
+          <button
+            className="px-2 flex gap-3 hover:bg-[#f8f8f8] h-[40px] items-center justify-center"
+            onClick={bringToFront}
+          >
+            Front
           </button>
         </div>
       </div>
