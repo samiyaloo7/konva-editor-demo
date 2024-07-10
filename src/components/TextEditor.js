@@ -26,7 +26,7 @@ function TextEditor({
   };
 
   return (
-    <div className="border-b relative z-50 bg-[#fff] shadow-lg">
+    <div className="fixed top-[80px] left-[120px] w-[calc(100vw_-_120px)] border-b z-50 bg-[#fff] shadow-lg">
       <div className="text-editor flex container mx-auto divide-x  justify-center">
         <div className="min-w-[206px] flex items-center  rounded-full px-3 pr-5">
           <CiText className="text-[26px] mr-2" />
