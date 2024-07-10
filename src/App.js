@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Text, Transformer, Image } from "react-konva";
+import { Stage, Layer, Text, Transformer, Image, Rect } from "react-konva";
 import { TfiText } from "react-icons/tfi";
 import "./App.css";
 import Header from "./components/Header";
@@ -8,8 +8,9 @@ import { PiImageSquare } from "react-icons/pi";
 import { BiLogoGraphql } from "react-icons/bi";
 import TextEditor from "./components/TextEditor";
 import ImageEditor from "./components/ImageEditor";
-
 import backgroundImg from "./components/images/preview.jpg";
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 
 function App() {
   const [texts, setTexts] = useState([]);
@@ -17,12 +18,42 @@ function App() {
   const [selectedTextIndex, setSelectedTextIndex] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [isTextBoxVisible, setIsTextBoxVisible] = useState(false);
+  const [scaleZoom, setScaleZoom] = useState("100%");
+  const boundary = { x: 0, y: 0, width: 100, height: 100 };
+
+  const [scale, setScale] = useState(1);
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
   const transformerRef = useRef(null);
   const stageRef = useRef(null);
 
   const offsetX = 10;
   const offsetY = 10;
+  const checkBoundaries = (node) => {
+    const { x, y, width, height } = node.getClientRect();
+    const stage = stageRef.current;
+    console.log("==============", stage);
+    console.log(x, boundary.x, width, boundary.width);
+
+    // console.log(x >= boundary.x && x + width <= boundary.x + boundary.width);
+    // console.log(y >= boundary.y && y + height <= boundary.y + boundary.height);
+
+    const withinX = x >= boundary.x && x + width <= boundary.x + boundary.width;
+    const withinY =
+      y >= boundary.y && y + height <= boundary.y + boundary.height;
+    return withinX && withinY;
+  };
+
+  const handleDragEnd = (e) => {
+    const node = e.target;
+    if (!checkBoundaries(node)) {
+      node.to({
+        x: boundary.x,
+        y: boundary.y,
+        duration: 0.5,
+      });
+    }
+  };
 
   const addText = () => {
     setTexts([
@@ -106,6 +137,31 @@ function App() {
     setTexts(newTexts);
   };
 
+  const checkImageBounds = (image, node) => {
+    const stage = stageRef.current;
+    const stageWidth = stage.width();
+    const stageHeight = stage.height();
+
+    let newX = node.x();
+    let newY = node.y();
+
+    // Ensure the text is within the horizontal boundaries
+    if (newX < 0) {
+      newX = 0;
+    } else if (newX + node.width() > stageWidth) {
+      newX = stageWidth - node.width();
+    }
+
+    // Ensure the text is within the vertical boundaries
+    if (newY < 0) {
+      newY = 0;
+    } else if (newY + node.height() > stageHeight) {
+      newY = stageHeight - node.height();
+    }
+
+    return { x: newX, y: newY };
+  };
+
   const checkTextBounds = (text, node) => {
     const stage = stageRef.current;
     const stageWidth = stage.width();
@@ -158,8 +214,10 @@ function App() {
           ...images,
           {
             image: img,
-            width: 50,
-            height: 50,
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
             rotation: 0,
             locked: false,
             x: 50,
@@ -228,6 +286,70 @@ function App() {
     imageNode.moveToBottom();
     setSelectedImageIndex(index);
   };
+  const addShape = () => {
+    const defaultColor = "#637EF7";
+    let shapeBase = {
+      id: Math.random(),
+      draggable: true,
+      shadowBlur: 0,
+      brightness: 0,
+      blur: 0,
+      contrast: 0,
+      pixelSize: 1,
+      fill: defaultColor,
+      // filters: [
+      //   Konva.Filters.Blur,
+      //   ...(shape.type !== "text" && [
+      //     Konva.Filters.Brighten,
+      //     Konva.Filters.Contrast,
+      //     Konva.Filters.Pixelate,
+      //   ]),
+      // ],
+    };
+    const shapeConfig = {};
+
+    const shape = {
+      ...shapeBase,
+      type: "rectangle",
+      y: shapeConfig.y ?? Math.random() * 100,
+      x: shapeConfig.x ?? Math.random() * 100,
+      width: shapeConfig.width ?? 50,
+      height: shapeConfig.height ?? 50,
+      fill: shapeConfig.fill ?? "#637EF7",
+    };
+
+    setImages(shape);
+  };
+
+  const handleWheel = (e) => {
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    const oldScale = stage.scaleX();
+
+    const pointer = stage.getPointerPosition();
+    const mousePointTo = {
+      x: pointer.x / oldScale - stage.x() / oldScale,
+      y: pointer.y / oldScale - stage.y() / oldScale,
+    };
+
+    const newScale = e.evt.deltaY > 0 ? oldScale * 1.1 : oldScale / 1.1;
+    setScale(newScale);
+
+    const newPos = {
+      x: -(mousePointTo.x - pointer.x / newScale) * newScale,
+      y: -(mousePointTo.y - pointer.y / newScale) * newScale,
+    };
+    setStagePos(newPos);
+  };
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    stage.scale({ x: scale, y: scale });
+    stage.position(stagePos);
+    stage.batchDraw();
+  }, [scale, stagePos]);
+
+  console.log({ selectedImageIndex });
 
   return (
     <>
@@ -254,11 +376,13 @@ function App() {
           onToggleLock={() => toggleLockImage(selectedImageIndex)}
           bringToFront={() => bringImageToFront(selectedImageIndex)}
           sendToBack={() => sendImageToBack(selectedImageIndex)}
+          // handleRotateImage={handleRotateImage}
+          // onToggleLock={toggleLockImage}
           image={images[selectedImageIndex]}
         />
       )}
       <div className="grid grid-cols-12">
-        <div className=" bg-[#f8f8f8e6] backdrop-blur-[10px] flex flex-col items-center pt-14 relative z-50">
+        <div className=" bg-[#f8f8f8e6] backdrop-blur-[10px] flex flex-col items-center pt-14 fixed top-20 left-0 z-[999] px-5">
           <div className="w-full flex flex-col gap-3">
             <button className="flex items-center justify-center flex-col w-[80%] mx-auto pb-2 relative">
               <TfiText
@@ -310,7 +434,7 @@ function App() {
                 </div>
               )}
             </button>
-
+            <button onClick={addShape}> Add Shape </button>
             <button className="flex items-center justify-center flex-col w-[80%] mx-auto py-2">
               <AiFillAppstore className="text-2xl" />
               Designs
@@ -330,8 +454,16 @@ function App() {
             </button>
           </div>
         </div>
-
-        <div className="relative h-[calc(100vh-80px)] col-span-11 bg-[#9d2424] pl-[100px] pr-[50px] py-5  ">
+        {/* <TransformWrapper>
+          <TransformComponent> */}
+        {/* <Board /> */}
+        <div
+          className="relative h-[calc(100vh-200px)] col-span-11 bg-[#F8F8F8] pl-[100px] pr-[50px] py-5"
+          style={{
+            scale: scaleZoom,
+            // zoom: scaleZoom,
+          }}
+        >
           <div className="">
             <img src={backgroundImg} alt="" />
             <Stage
@@ -339,14 +471,25 @@ function App() {
               height={100}
               style={{
                 position: "absolute",
-                top: "60%",
+                // top: "60%",
+                top: "500px",
                 left: "58%",
                 transform: "translate(-46.5%,-50%)",
                 border: "1px solid #08867F",
               }}
               ref={stageRef}
+              onWheel={handleWheel}
             >
               <Layer>
+                {/* <Rect
+                  x={0}
+                  y={0}
+                  width={50}
+                  height={50}
+                  fill="black"
+                  draggable
+                  // shadowBlur={10}
+                /> */}
                 {texts.map((text, i) => (
                   <React.Fragment key={i}>
                     <Text
@@ -370,6 +513,10 @@ function App() {
                           ...newTexts[i],
                           ...newPosition,
                         };
+                        console.log("start :", {
+                          newPosition,
+                          newTexts,
+                        });
                         setTexts(newTexts);
                       }}
                       onTransformEnd={(e) => {
@@ -381,6 +528,10 @@ function App() {
                           width: e.target.width(),
                           height: e.target.height(),
                         };
+                        console.log("stop :", {
+                          newPosition,
+                          newTexts,
+                        });
                         setTexts(newTexts);
                       }}
                     />
@@ -391,32 +542,66 @@ function App() {
                     <Image
                       image={image.image}
                       id={`Image-${index}`}
-                      width={image.width}
-                      height={image.height}
-                      rotation={image.rotation}
+                      // width={image.width / 2}
+                      // height={image.height / 2}
+                      // offsetX={image.width - 10}
+                      // offsetY={50}
+                      // offsetX={image.width / 2}
+                      // offsetY={image.height / 2}
+                      // rotation={image.rotation}
+                      {...image}
+                      // x={0}
+                      // y={0}
+                      // offsetX={image.width / 7}
+                      // offsetY={image.height / 7}
                       draggable={!image.locked}
-                      onDragEnd={(e) => {
-                        handleUpdateImage(index, {
-                          x: e.target.x(),
-                          y: e.target.y(),
-                        });
-                      }}
-                      onTransformEnd={(e) => {
-                        const node = e.target;
-                        const scaleX = node.scaleX();
-                        const scaleY = node.scaleY();
+                      // onDragEnd={(e) => {
+                      //   handleUpdateImage(index, {
+                      //     x: e.target.x(),
+                      //     y: e.target.y(),
+                      //   });
+                      // }}
+                      onDragEnd={handleDragEnd}
+                      //
+                      // onDragEnd={(e) => {
+                      //   const newPosition = checkTextBounds(image, e.target);
+                      //   const newImages = images.slice();
+                      //   newImages[index] = {
+                      //     ...newImages[index],
+                      //     ...newPosition,
+                      //   };
+                      //   console.log("start :", { newPosition, newImages });
+                      //   setImages(newImages);
+                      // }}
+                      // onTransformEnd={(e) => {
+                      //   const newPosition = checkTextBounds(image, e.target);
+                      //   const newImages = texts.slice();
+                      //   newImages[index] = {
+                      //     ...newImages[index],
+                      //     ...newPosition,
+                      //     width: e.target.width(),
+                      //     height: e.target.height(),
+                      //   };
+                      //   console.log("stop :", { newPosition, newImages });
+                      //   setImages(newImages);
+                      // }}
+                      // onTransformEnd={(e) => {
+                      //   const node = e.target;
+                      //   const scaleX = node.scaleX();
+                      //   const scaleY = node.scaleY();
 
-                        const newWidth = Math.max(5, node.width() * scaleX);
-                        const newHeight = Math.max(5, node.height() * scaleY);
+                      //   const newWidth = Math.max(5, node.width() * scaleX);
+                      //   const newHeight = Math.max(5, node.height() * scaleY);
 
-                        handleUpdateImage(index, {
-                          x: node.x(),
-                          y: node.y(),
-                          width: newWidth,
-                          height: newHeight,
-                        });
-                      }}
+                      //   handleUpdateImage(index, {
+                      //     x: node.x(),
+                      //     y: node.y(),
+                      //     width: newWidth,
+                      //     height: newHeight,
+                      //   });
+                      // }}
                       onClick={() => {
+                        console.log({ index });
                         setSelectedImageIndex(index);
                         setSelectedTextIndex(null);
                       }}
@@ -452,9 +637,52 @@ function App() {
             </Stage>
           </div>
         </div>
+        {/* </TransformComponent>
+        </TransformWrapper> */}
+      </div>
+      {/* toolbar footer */}
+      <div className="bg-black/30 p-5 w-full fixed bottom-0 left-0">
+        <div className="w-[300px]">
+          <Slider
+            min={50}
+            max={150}
+            defaultValue={100}
+            // value={scaleZoom}
+            // handle={(props) => <div {...props}></div>}
+            onChange={(value) => setScaleZoom(value + "%")}
+            // onChange={(value) => setScale(`${value * 2}%`)}
+          />
+        </div>
+        {/* <div className="tools">
+          <button onClick={() => zoomIn()}>+</button>
+          <button onClick={() => zoomOut()}>-</button>
+          <button onClick={() => resetTransform()}>x</button>
+        </div> */}
       </div>
     </>
   );
 }
+
+// const Board = () => {
+//   const { zoomIn, zoomOut, resetTransform } = useControls();
+//   return (
+//     <TransformWrapper
+//       initialScale={1}
+//       initialPositionX={200}
+//       initialPositionY={100}
+//     >
+//       {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+//         <>
+//           <button onClick={() => zoomIn()}>+</button>
+//           <button onClick={() => zoomOut()}>-</button>
+//           <button onClick={() => resetTransform()}>x</button>
+//           <TransformComponent>
+//             <div>Example text</div>
+//           </TransformComponent>
+//         </>
+//       )}
+//     </TransformWrapper>
+//   );
+// };
 
 export default App;

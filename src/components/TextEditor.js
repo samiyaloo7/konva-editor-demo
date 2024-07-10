@@ -28,7 +28,7 @@ function TextEditor({
   };
 
   return (
-    <div className="border-b relative z-50 bg-[#fff] shadow-lg">
+    <div className="fixed top-[80px] left-[120px] w-[calc(100vw_-_120px)] border-b z-50 bg-[#fff] shadow-lg">
       <div className="text-editor flex container mx-auto divide-x  justify-center">
         {/* <div className="min-w-[150px] flex items-center px-3">
           <input
