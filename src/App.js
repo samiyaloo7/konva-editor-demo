@@ -220,8 +220,6 @@ function App() {
             height: 100,
             rotation: 0,
             locked: false,
-            x: 50,
-            y: 50,
           },
         ]);
       };
