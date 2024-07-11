@@ -11,6 +11,9 @@ import ImageEditor from "./components/ImageEditor";
 import backgroundImg from "./components/images/preview.jpg";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
+import CommonPopover from "./components/pop-overs";
+import GraphicsPopOver from "./components/pop-overs/GraphicsPopOver";
+import RectShape from "./components/graphics/RectShape";
 
 function App() {
   const [texts, setTexts] = useState([]);
@@ -340,6 +343,8 @@ function App() {
     setStagePos(newPos);
   };
 
+  const handleGraphicsClick = (e) => {};
+
   useEffect(() => {
     const stage = stageRef.current;
     stage.scale({ x: scale, y: scale });
@@ -432,7 +437,7 @@ function App() {
                 </div>
               )}
             </button>
-            <button onClick={addShape}> Add Shape </button>
+            {/* <button onClick={addShape}> Add Shape </button> */}
             <button className="flex items-center justify-center flex-col w-[80%] mx-auto py-2">
               <AiFillAppstore className="text-2xl" />
               Designs
@@ -446,10 +451,20 @@ function App() {
                 onChange={handleImageUpload}
               />
             </button>
-            <button className="flex items-center justify-center flex-col w-[80%] mx-auto py-2">
+            {/* <button className="flex items-center justify-center flex-col w-[80%] mx-auto py-2">
               <BiLogoGraphql className="text-2xl" />
               Graphics
-            </button>
+            </button> */}
+            <CommonPopover
+              target={
+                <button className="flex items-center justify-center flex-col w-full">
+                  <BiLogoGraphql className="text-2xl" />
+                  Graphics
+                </button>
+              }
+            >
+              <GraphicsPopOver handleClick={addShape} />
+            </CommonPopover>
           </div>
         </div>
         {/* <TransformWrapper>
@@ -479,15 +494,7 @@ function App() {
               onWheel={handleWheel}
             >
               <Layer>
-                {/* <Rect
-                  x={0}
-                  y={0}
-                  width={50}
-                  height={50}
-                  fill="black"
-                  draggable
-                  // shadowBlur={10}
-                /> */}
+                <RectShape />
                 {texts.map((text, i) => (
                   <React.Fragment key={i}>
                     <Text
