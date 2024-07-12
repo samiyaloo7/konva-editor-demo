@@ -6,7 +6,7 @@ import { BsArrow90DegLeft, BsArrow90DegRight } from "react-icons/bs";
 import { BiMobileVibration, BiSolidMobileVibration } from "react-icons/bi";
 import { IoEyeOutline } from "react-icons/io5";
 
-const Header = () => {
+const Header = ({ showChangeSize, setShowChangeSize }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -55,7 +55,10 @@ const Header = () => {
               </div>
             </div>
             <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-              <button className="px-5 flex gap-2 hover:bg-[#f8f8f8] h-[60px] items-center justify-center rounded-full">
+              <button
+                onClick={() => setShowChangeSize(!showChangeSize)}
+                className="px-5 flex gap-2 hover:bg-[#f8f8f8] h-[60px] items-center justify-center rounded-full"
+              >
                 <BiMobileVibration className="text-2xl" />
                 Change size
               </button>
