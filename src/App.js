@@ -548,11 +548,12 @@ function App() {
   };
 
   useEffect(() => {
-    refreshStage();
     window.addEventListener("resize", refreshStage, true);
+    window.addEventListener("load", refreshStage);
 
     return () => {
       window.removeEventListener("resize", refreshStage);
+      window.removeEventListener("load", refreshStage);
     };
   }, []);
 
