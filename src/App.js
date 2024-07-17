@@ -29,24 +29,6 @@ import GraphicsPopOver from "./components/pop-overs/GraphicsPopOver";
 import ShapeEditor from "./components/ShapeEditor";
 import SizeDrawer from "./components/SizeDrawer";
 
-const initialPos = {
-  arrow: {
-    x: 50,
-    y: 30,
-  },
-};
-
-const draggedPos = {
-  arrow: {
-    x: 50,
-    y: 30,
-  },
-  rect: {
-    x: 50,
-    y: 50,
-  },
-};
-
 function App() {
   const [texts, setTexts] = useState([]);
   const [images, setImages] = useState([]);
@@ -71,8 +53,6 @@ function App() {
   const stageRef = useRef(null);
   const targetImageRef = useRef(null);
 
-  const [itemIndex, setItemIndex] = useState(0);
-
   const offsetX = 10;
   const offsetY = 10;
   const checkBoundaries = (node) => {
@@ -82,17 +62,6 @@ function App() {
     const withinY = y >= 0 && y + height <= 0 + boundary.height;
 
     return withinX && withinY;
-  };
-
-  const handleTextDragEnd = (e) => {
-    const node = e.target;
-    if (!checkBoundaries(node)) {
-      node.to({
-        x: boundary.width / 2 - node.width() / 2,
-        y: boundary.height / 2,
-        duration: 0.5,
-      });
-    }
   };
 
   const handleDragEnd = (e, shape) => {
@@ -254,14 +223,6 @@ function App() {
             y: 10,
             width: 80,
             height: 80,
-            // width:
-            //   String(img.width)?.length > 2
-            //     ? img.width / Math.pow(10, String(img.width)?.length - 2)
-            //     : img.width,
-            // height:
-            //   String(img.height)?.length > 2
-            //     ? img.height / Math.pow(10, String(img.height)?.length - 2)
-            //     : img.height,
             rotation: 0,
             locked: false,
           },
@@ -320,46 +281,6 @@ function App() {
     setSelectedImageIndex(index);
   };
 
-  const bringToTop = (target) => {
-    const targetItem = itemIndex + 1;
-
-    // `#text-${selectedTextIndex}`
-    // `#${target}-${targetItem}`
-    // const selectedNode =
-
-    console.log("target - targetItem", target, targetItem);
-
-    setTimeout(() => {
-      console.log(`#${target}-${targetItem}`);
-      stageRef?.current?.findOne(`#${target}-${targetItem}`)?.moveToTop();
-      setItemIndex(targetItem);
-    }, 2000);
-    // selectedNode.moveToTop();
-
-    // if (selectedTextIndex !== null) {
-    //   const selectedNode = stageRef.current.findOne(
-    //     `#text-${selectedTextIndex}`
-    //   );
-    //   transformerRef.current.nodes([selectedNode]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // } else if (selectedImageIndex !== null) {
-    //   const selectedNode = stageRef.current.findOne(
-    //     `#Image-${selectedImageIndex}`
-    //   );
-    //   transformerRef.current.nodes([selectedNode]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // } else if (selectedShapeIndex !== null) {
-    //   const selectedNode = stageRef.current.findOne(
-    //     `#Shape-${selectedShapeIndex}`
-    //   );
-    //   transformerRef.current.nodes([selectedNode]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // } else {
-    //   transformerRef.current.nodes([]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // }
-  };
-
   const addShape = (selectedShape) => {
     const shapeProps = {
       item: selectedShape,
@@ -380,8 +301,6 @@ function App() {
         ...shapeProps,
       },
     ]);
-
-    bringToTop("Shape");
   };
 
   const handleWheel = (e) => {
@@ -467,7 +386,6 @@ function App() {
             ? { ...shape, x: 1, y: 1, height: 1, width: 1 }
             : shape;
       });
-      console.log(test);
       return test;
     });
     setSelectedShapeIndex(null);
@@ -516,14 +434,12 @@ function App() {
 
     shapes.forEach((element, idx) => {
       if (idx === i) {
-        console.log("odd : ", element);
         tempShapes.push({
           ...element,
           x: e.target.x(),
           y: e.target.y(),
         });
       } else {
-        console.log("normal : ", element);
         tempShapes.push(element);
       }
     });
@@ -555,8 +471,6 @@ function App() {
       window.removeEventListener("resize", refreshStage);
     };
   }, []);
-
-  console.log("shapes : ", shapes);
 
   return (
     <>
@@ -715,7 +629,6 @@ function App() {
                       x={boundary.width / 4}
                       y={boundary.height / 4}
                       onClick={() => {
-                        // console.log({ index });
                         setSelectedImageIndex(index);
                         setSelectedTextIndex(null);
                         setSelectedShapeIndex(null);
@@ -729,7 +642,6 @@ function App() {
                       key={i}
                       id={`text-${i}`}
                       {...text}
-                      // wrap={true}
                       wrap="char"
                       draggable={!text.locked}
                       onClick={() => {
@@ -761,16 +673,6 @@ function App() {
                           key={i}
                           id={`Shape-${i}`}
                           {...others}
-                          // x={
-                          //   others?.width
-                          //     ? others?.width / 2
-                          //     : boundary.width / 2
-                          // }
-                          // y={
-                          //   others?.height
-                          //     ? others?.height / 2
-                          //     : boundary.height / 2
-                          // }
                           x={boundary.width / 2 + others.width / 2}
                           y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width}
@@ -828,16 +730,6 @@ function App() {
                           radius={others?.radius ?? 15}
                           fill={others.fill}
                           rotation={0}
-                          // x={
-                          //   others?.width
-                          //     ? others?.width / 2
-                          //     : boundary.width / 2
-                          // }
-                          // y={
-                          //   others?.height
-                          //     ? others?.height / 2
-                          //     : boundary.height / 2
-                          // }
                           x={boundary.width / 2 + others.width / 2}
                           y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
@@ -864,24 +756,10 @@ function App() {
                         <Shape
                           key={i}
                           id={`Shape-${i}`}
-                          // x={
-                          //   others?.width
-                          //     ? others?.width / 2
-                          //     : boundary.width / 2
-                          // }
-                          // y={
-                          //   others?.height
-                          //     ? others?.height / 2
-                          //     : boundary.height / 2
-                          // }
                           x={boundary.width / 2 + others.width / 2}
                           y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
-                          // height={others?.sceneFunc ? 0 : others.height}
-                          // width={others?.width ? 0 : others.width}
-                          // height={others?.sceneFunc ? 0 : others.height}
-                          // width={others?.sceneFunc ? 0 : others.width}
                           height={0}
                           width={0}
                           sceneFunc={
@@ -938,16 +816,6 @@ function App() {
                           radius={others?.radius ?? 15}
                           fill={others.fill}
                           rotation={0}
-                          // x={
-                          //   others?.width
-                          //     ? others?.width / 2
-                          //     : boundary.width / 2
-                          // }
-                          // y={
-                          //   others?.height
-                          //     ? others?.height / 2
-                          //     : boundary.height / 2
-                          // }
                           x={boundary.width / 2 + others.width / 2}
                           y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
@@ -974,40 +842,16 @@ function App() {
                         <Arrow
                           key={i}
                           id={`Shape-${i}`}
-                          // points={[0, 0, 0, 0]}
-                          // pointerLength={0}
-                          // pointerWidth={0}
                           points={
                             others?.deleted ? [0, 0, 0, 0] : [0, 50, 50, 50]
-                          } //
+                          }
                           pointerLength={others?.deleted ? 0 : 20}
                           pointerWidth={others?.deleted ? 0 : 20}
-                          // points={others?.points} // [0, 50, 50, 50]
-                          // pointerLength={others?.pointerLength}
-                          // pointerWidth={others?.pointerWidth}
                           fill={others.fill}
                           stroke={others.fill}
                           strokeWidth={4}
-                          x={
-                            boundary.width / 4
-                            // initialPos.x
-                            // 50
-                            // others?.width
-                            //   ? others?.width / 2
-                            //   : boundary.width / 2
-                          }
-                          y={
-                            boundary.width / 8
-                            // initialPos.y
-                            // 30
-                            // others?.height
-                            //   ? others?.height / 2
-                            //   : boundary.height / 2
-                          }
-                          // x={boundary.width / 2 + others.width / 2}
-                          // y={boundary.height / 2 + others.height / 2}
-                          // offsetX={25}
-                          // offsetY={25}
+                          x={boundary.width / 4}
+                          y={boundary.width / 8}
                           onClick={() => {
                             setSelectedTextIndex(null);
                             setSelectedImageIndex(null);
@@ -1030,16 +874,6 @@ function App() {
                         <Star
                           key={i}
                           id={`Shape-${i}`}
-                          // x={
-                          //   others?.width
-                          //     ? others?.width / 2
-                          //     : boundary.width / 2
-                          // }
-                          // y={
-                          //   others?.height
-                          //     ? others?.height / 2
-                          //     : boundary.height / 2
-                          // }
                           x={boundary.width / 2 + others.width / 2}
                           y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
@@ -1072,16 +906,6 @@ function App() {
                         <Line
                           key={i}
                           id={`Shape-${i}`}
-                          // x={
-                          //   others?.width
-                          //     ? others?.width / 2
-                          //     : boundary.width / 2
-                          // }
-                          // y={
-                          //   others?.height
-                          //     ? others?.height / 2
-                          //     : boundary.height / 2
-                          // }
                           x={boundary.width / 2 + others.width / 2}
                           y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
