@@ -26,9 +26,26 @@ import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 import CommonPopover from "./components/pop-overs";
 import GraphicsPopOver from "./components/pop-overs/GraphicsPopOver";
-import RectShape from "./components/graphics/RectShape";
 import ShapeEditor from "./components/ShapeEditor";
 import SizeDrawer from "./components/SizeDrawer";
+
+const initialPos = {
+  arrow: {
+    x: 50,
+    y: 30,
+  },
+};
+
+const draggedPos = {
+  arrow: {
+    x: 50,
+    y: 30,
+  },
+  rect: {
+    x: 50,
+    y: 50,
+  },
+};
 
 function App() {
   const [texts, setTexts] = useState([]);
@@ -40,7 +57,6 @@ function App() {
   const [isTextBoxVisible, setIsTextBoxVisible] = useState(false);
   const [scaleZoom, setScaleZoom] = useState("100%");
   const [showChangeSize, setShowChangeSize] = useState(false);
-  // const [itemInfo,]
   const [boundary, setBoundary] = useState({
     x: 500,
     y: 900,
@@ -55,16 +71,12 @@ function App() {
   const stageRef = useRef(null);
   const targetImageRef = useRef(null);
 
+  const [itemIndex, setItemIndex] = useState(0);
+
   const offsetX = 10;
   const offsetY = 10;
   const checkBoundaries = (node) => {
     const { x, y, width, height } = node.getClientRect();
-    const stage = stageRef.current;
-    // console.log("==============", stage);
-    // console.log(x, boundary.x, width, boundary.width);
-
-    // // console.log(x >= boundary.x && x + width <= boundary.x + boundary.width);
-    // // console.log(y >= boundary.y && y + height <= boundary.y + boundary.height);
 
     const withinX = x >= 0 && x + width <= 0 + boundary.width;
     const withinY = y >= 0 && y + height <= 0 + boundary.height;
@@ -74,7 +86,6 @@ function App() {
 
   const handleTextDragEnd = (e) => {
     const node = e.target;
-    // console.log(node.width(), boundary.width);
     if (!checkBoundaries(node)) {
       node.to({
         x: boundary.width / 2 - node.width() / 2,
@@ -84,18 +95,28 @@ function App() {
     }
   };
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (e, shape) => {
     const node = e.target;
     if (!checkBoundaries(node)) {
-      node.to({
-        // x: boundary.x,
-        // y: boundary.y,
-        x: boundary.width / 2,
-        y: boundary.height / 2,
-        // x: -10,
-        // y: -10,
-        duration: 0.5,
-      });
+      if (shape === "arrow") {
+        node.to({
+          x: boundary.width / 4,
+          y: boundary.height / 8,
+          duration: 0.5,
+        });
+      } else if (shape === "image") {
+        node.to({
+          x: boundary.width / 4,
+          y: boundary.height / 4,
+          duration: 0.5,
+        });
+      } else {
+        node.to({
+          x: boundary.width / 2 + node.width() / 2,
+          y: boundary.height / 2 + node.height() / 2,
+          duration: 0.5,
+        });
+      }
     }
   };
 
@@ -132,7 +153,6 @@ function App() {
       ...newShape[index],
       [key]: value,
     };
-    // console.log({ newShape });
     setShapes(newShape);
   };
 
@@ -160,11 +180,6 @@ function App() {
           .filter((style) => style !== property)
           .join(" ");
       } else {
-        // console.log("newTexts[index].fontStyle, currentStyles, property");
-        // // console.log(newTexts[index].fontStyle, currentStyles, property);
-        // console.log(newTexts[index]);
-        // console.log(currentStyles);
-        // console.log(property);
         newTexts[index].fontStyle = [...currentStyles, property].join(" ");
         newTexts[index].wrap = true;
       }
@@ -197,54 +212,7 @@ function App() {
     setTexts(newTexts);
   };
 
-  const checkImageBounds = (image, node) => {
-    const stage = stageRef.current;
-    const stageWidth = stage.width();
-    const stageHeight = stage.height();
-
-    let newX = node.x();
-    let newY = node.y();
-
-    // Ensure the text is within the horizontal boundaries
-    if (newX < 0) {
-      newX = 0;
-    } else if (newX + node.width() > stageWidth) {
-      newX = stageWidth - node.width();
-    }
-
-    // Ensure the text is within the vertical boundaries
-    if (newY < 0) {
-      newY = 0;
-    } else if (newY + node.height() > stageHeight) {
-      newY = stageHeight - node.height();
-    }
-
-    return { x: newX, y: newY };
-  };
-
-  const checkTextBounds = (text, node) => {
-    const stage = stageRef.current;
-    const stageWidth = stage.width();
-    const stageHeight = stage.height();
-
-    let newX = node.x();
-    let newY = node.y();
-    if (newX < 0) {
-      newX = 0;
-    } else if (newX + node.width() > stageWidth) {
-      newX = stageWidth - node.width();
-    }
-    if (newY < 0) {
-      newY = 0;
-    } else if (newY + node.height() > stageHeight) {
-      newY = stageHeight - node.height();
-    }
-
-    return { x: newX, y: newY };
-  };
-
   useEffect(() => {
-    // console.log({ selectedShapeIndex });
     if (selectedTextIndex !== null) {
       const selectedNode = stageRef.current.findOne(
         `#text-${selectedTextIndex}`
@@ -276,12 +244,7 @@ function App() {
     reader.onload = () => {
       const img = new window.Image();
       img.src = reader.result;
-      console.log(" ===== ");
-      console.log(
-        e.target.files[0]
-        // Math.pow(10, String(img.width)?.length - 2),
-        // img.width / Math.pow(10, String(img.width)?.length - 2)
-      );
+
       img.onload = () => {
         setImages([
           ...images,
@@ -307,15 +270,6 @@ function App() {
     };
 
     reader.readAsDataURL(file);
-  };
-
-  const handleUpdateImage = (index, newAttrs) => {
-    const updatedImages = [...images];
-    updatedImages[index] = {
-      ...updatedImages[index],
-      ...newAttrs,
-    };
-    setImages(updatedImages);
   };
 
   const handleDeleteImage = (index) => {
@@ -365,41 +319,50 @@ function App() {
     imageNode.moveToBottom();
     setSelectedImageIndex(index);
   };
-  const addShape = (selectedShape) => {
-    // const defaultColor = "#637EF7";
-    // let shapeBase = {
-    //   id: Math.random(),
-    //   draggable: true,
-    //   shadowBlur: 0,
-    //   brightness: 0,
-    //   blur: 0,
-    //   contrast: 0,
-    //   pixelSize: 1,
-    //   fill: defaultColor,
-    //   // filters: [
-    //   //   Konva.Filters.Blur,
-    //   //   ...(shape.type !== "text" && [
-    //   //     Konva.Filters.Brighten,
-    //   //     Konva.Filters.Contrast,
-    //   //     Konva.Filters.Pixelate,
-    //   //   ]),
-    //   // ],
-    // };
-    // const shapeConfig = {};
 
-    // const shape = {
-    //   ...shapeBase,
-    //   type: "rectangle",
-    //   y: shapeConfig.y ?? Math.random() * 100,
-    //   x: shapeConfig.x ?? Math.random() * 100,
-    //   width: shapeConfig.width ?? 50,
-    //   height: shapeConfig.height ?? 50,
-    //   fill: shapeConfig.fill ?? "#637EF7",
-    // };
+  const bringToTop = (target) => {
+    const targetItem = itemIndex + 1;
+
+    // `#text-${selectedTextIndex}`
+    // `#${target}-${targetItem}`
+    // const selectedNode =
+
+    console.log("target - targetItem", target, targetItem);
+
+    setTimeout(() => {
+      console.log(`#${target}-${targetItem}`);
+      stageRef?.current?.findOne(`#${target}-${targetItem}`)?.moveToTop();
+      setItemIndex(targetItem);
+    }, 2000);
+    // selectedNode.moveToTop();
+
+    // if (selectedTextIndex !== null) {
+    //   const selectedNode = stageRef.current.findOne(
+    //     `#text-${selectedTextIndex}`
+    //   );
+    //   transformerRef.current.nodes([selectedNode]);
+    //   transformerRef.current.getLayer().batchDraw();
+    // } else if (selectedImageIndex !== null) {
+    //   const selectedNode = stageRef.current.findOne(
+    //     `#Image-${selectedImageIndex}`
+    //   );
+    //   transformerRef.current.nodes([selectedNode]);
+    //   transformerRef.current.getLayer().batchDraw();
+    // } else if (selectedShapeIndex !== null) {
+    //   const selectedNode = stageRef.current.findOne(
+    //     `#Shape-${selectedShapeIndex}`
+    //   );
+    //   transformerRef.current.nodes([selectedNode]);
+    //   transformerRef.current.getLayer().batchDraw();
+    // } else {
+    //   transformerRef.current.nodes([]);
+    //   transformerRef.current.getLayer().batchDraw();
+    // }
+  };
+
+  const addShape = (selectedShape) => {
     const shapeProps = {
       item: selectedShape,
-      // y: 50,
-      // x: 50,
       x: boundary.width / 2,
       y: boundary.height / 2,
       width: 30,
@@ -417,6 +380,8 @@ function App() {
         ...shapeProps,
       },
     ]);
+
+    bringToTop("Shape");
   };
 
   const handleWheel = (e) => {
@@ -440,17 +405,8 @@ function App() {
     setStagePos(newPos);
   };
 
-  const handleGraphicsClick = (e) => {};
-
   const handleDeleteShape = (index) => {
-    console.log("shape index to delete", index);
-    // const filteredShapes = shapes.filter((_, i) => i !== index);
-    // // console.log({ filteredShapes }, index);
-    // setShapes(filteredShapes);
-    console.log("shapes ==============");
-    console.log(shapes);
     setShapes((prevShapes) => {
-      // const test = prevShapes.filter((_, i) => i !== index);
       const test = prevShapes.map((shape, i) => {
         if (["line"].includes(shapes[index]?.item))
           return i === index
@@ -476,8 +432,6 @@ function App() {
                 pointerLength: 0,
                 pointerWidth: 0,
                 point: [0, 0, 0, 0],
-                // x: -100,
-                // y: -100,
 
                 deleted: true,
                 height: 1,
@@ -547,7 +501,6 @@ function App() {
       ...newTexts[index],
       locked: !newTexts[index].locked,
     };
-    // console.log({ lock: newTexts[index].locked });
     if (newTexts[index].locked) {
       transformerRef.current.nodes([]);
     } else {
@@ -562,7 +515,6 @@ function App() {
     const tempShapes = [];
 
     shapes.forEach((element, idx) => {
-      // if (element.id === `Shape-${i}`) {
       if (idx === i) {
         console.log("odd : ", element);
         tempShapes.push({
@@ -596,6 +548,7 @@ function App() {
   };
 
   useEffect(() => {
+    refreshStage();
     window.addEventListener("resize", refreshStage, true);
 
     return () => {
@@ -603,12 +556,7 @@ function App() {
     };
   }, []);
 
-  // console.log({ selectedImageIndex });
-  // console.log({ shapes });
-
-  // console.log({ texts, images, shapes });
-  // console.log({ shapes });
-  console.log("selected shape : ", selectedShapeIndex);
+  console.log("shapes : ", shapes);
 
   return (
     <>
@@ -645,8 +593,6 @@ function App() {
           onToggleLock={() => toggleLockImage(selectedImageIndex)}
           bringToFront={() => bringImageToFront(selectedImageIndex)}
           sendToBack={() => sendImageToBack(selectedImageIndex)}
-          // handleRotateImage={handleRotateImage}
-          // onToggleLock={toggleLockImage}
           image={images[selectedImageIndex]}
         />
       )}
@@ -676,12 +622,6 @@ function App() {
               Text
               {isTextBoxVisible && (
                 <div className="flex justify-center items-center absolute top-0 left-[100px] z-30 bg-gray-100">
-                  {/*     z-index: 99;
-    width: 400px;
-    position: absolute;
-    left: 50px;
-    top: 0px;
-    padding: 20px; */}
                   <div className="bg-white p-6 rounded-lg shadow-lg w-80">
                     <div className="text-left">
                       <h2 className="text-xl font-bold mb-4">Text</h2>
@@ -715,7 +655,6 @@ function App() {
                 </div>
               )}
             </button>
-            {/* <button onClick={addShape}> Add Shape </button> */}
             <button className="flex items-center justify-center flex-col w-[80%] mx-auto py-2">
               <AiFillAppstore className="text-2xl" />
               Designs
@@ -729,10 +668,6 @@ function App() {
                 onChange={handleImageUpload}
               />
             </button>
-            {/* <button className="flex items-center justify-center flex-col w-[80%] mx-auto py-2">
-              <BiLogoGraphql className="text-2xl" />
-              Graphics
-            </button> */}
             <CommonPopover
               target={
                 <button className="flex items-center justify-center flex-col w-full">
@@ -745,14 +680,10 @@ function App() {
             </CommonPopover>
           </div>
         </div>
-        {/* <TransformWrapper>
-          <TransformComponent> */}
-        {/* <Board /> */}
         <div
           className="relative h-[calc(100vh-200px)] col-span-11 bg-[#F8F8F8] pl-[100px] pr-[50px] py-5"
           style={{
             scale: scaleZoom,
-            // zoom: scaleZoom,
           }}
         >
           <div className="relative">
@@ -760,17 +691,10 @@ function App() {
             <Stage
               width={boundary.width}
               height={boundary.height}
-              // width={100}
-              // height={100}
               style={{
                 position: "absolute",
-                // top: "60%",
-                // top: "500px",
-                // left: "58%",
                 top: boundary.x + "px",
                 left: boundary.y + "px",
-                // maxWidth: "20vw",
-                // maxHeight: "20vh",
                 transform: "translate(-46.5%,-50%)",
                 border: "1px solid #08867F",
               }}
@@ -778,12 +702,57 @@ function App() {
               onWheel={handleWheel}
             >
               <Layer>
+                {images.map((image, index) => (
+                  <React.Fragment key={index}>
+                    <Image
+                      image={image.image}
+                      id={`Image-${index}`}
+                      {...image}
+                      draggable={!image.locked}
+                      onDragEnd={(e) => {
+                        handleDragEnd(e, "image");
+                      }}
+                      x={boundary.width / 4}
+                      y={boundary.height / 4}
+                      onClick={() => {
+                        // console.log({ index });
+                        setSelectedImageIndex(index);
+                        setSelectedTextIndex(null);
+                        setSelectedShapeIndex(null);
+                      }}
+                    />
+                  </React.Fragment>
+                ))}
+                {texts.map((text, i) => (
+                  <React.Fragment key={i}>
+                    <Text
+                      key={i}
+                      id={`text-${i}`}
+                      {...text}
+                      // wrap={true}
+                      wrap="char"
+                      draggable={!text.locked}
+                      onClick={() => {
+                        setSelectedTextIndex(i);
+                        setSelectedImageIndex(null);
+                        setSelectedShapeIndex(null);
+                        setIsTextBoxVisible(true);
+                      }}
+                      align="center"
+                      onTap={() => {
+                        setSelectedTextIndex(i);
+                        setSelectedShapeIndex(null);
+                        setSelectedImageIndex(null);
+                      }}
+                      onDragEnd={(e) => {
+                        handleDragEnd(e, "text");
+                      }}
+                    />
+                  </React.Fragment>
+                ))}
+
                 {shapes?.map((shape, i) => {
                   const { item, ...others } = shape;
-                  // console.log(item, others);
-                  // shapes?.[i]?.x = boundary.width / 2
-
-                  console.log({ others });
 
                   switch (item) {
                     case "rect":
@@ -792,18 +761,20 @@ function App() {
                           key={i}
                           id={`Shape-${i}`}
                           {...others}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
-                          offsetX={others.width / 2}
-                          offsetY={others.height / 2}
+                          // x={
+                          //   others?.width
+                          //     ? others?.width / 2
+                          //     : boundary.width / 2
+                          // }
+                          // y={
+                          //   others?.height
+                          //     ? others?.height / 2
+                          //     : boundary.height / 2
+                          // }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
+                          offsetX={others.width}
+                          offsetY={others.height}
                           onClick={() => {
                             setSelectedTextIndex(null);
                             setSelectedImageIndex(null);
@@ -817,7 +788,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -827,16 +798,8 @@ function App() {
                           key={i}
                           id={`Shape-${i}`}
                           {...others}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -852,7 +815,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -865,16 +828,18 @@ function App() {
                           radius={others?.radius ?? 15}
                           fill={others.fill}
                           rotation={0}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
+                          // x={
+                          //   others?.width
+                          //     ? others?.width / 2
+                          //     : boundary.width / 2
+                          // }
+                          // y={
+                          //   others?.height
+                          //     ? others?.height / 2
+                          //     : boundary.height / 2
+                          // }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -890,7 +855,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -899,16 +864,18 @@ function App() {
                         <Shape
                           key={i}
                           id={`Shape-${i}`}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
+                          // x={
+                          //   others?.width
+                          //     ? others?.width / 2
+                          //     : boundary.width / 2
+                          // }
+                          // y={
+                          //   others?.height
+                          //     ? others?.height / 2
+                          //     : boundary.height / 2
+                          // }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           // height={others?.sceneFunc ? 0 : others.height}
@@ -958,7 +925,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -971,16 +938,18 @@ function App() {
                           radius={others?.radius ?? 15}
                           fill={others.fill}
                           rotation={0}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
+                          // x={
+                          //   others?.width
+                          //     ? others?.width / 2
+                          //     : boundary.width / 2
+                          // }
+                          // y={
+                          //   others?.height
+                          //     ? others?.height / 2
+                          //     : boundary.height / 2
+                          // }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -996,7 +965,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -1020,17 +989,25 @@ function App() {
                           stroke={others.fill}
                           strokeWidth={4}
                           x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
+                            boundary.width / 4
+                            // initialPos.x
+                            // 50
+                            // others?.width
+                            //   ? others?.width / 2
+                            //   : boundary.width / 2
                           }
                           y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
+                            boundary.width / 8
+                            // initialPos.y
+                            // 30
+                            // others?.height
+                            //   ? others?.height / 2
+                            //   : boundary.height / 2
                           }
-                          offsetX={others.width / 2}
-                          offsetY={others.height / 2}
+                          // x={boundary.width / 2 + others.width / 2}
+                          // y={boundary.height / 2 + others.height / 2}
+                          // offsetX={25}
+                          // offsetY={25}
                           onClick={() => {
                             setSelectedTextIndex(null);
                             setSelectedImageIndex(null);
@@ -1043,7 +1020,7 @@ function App() {
                           }}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                           draggable={!shape.locked}
                         />
@@ -1053,16 +1030,18 @@ function App() {
                         <Star
                           key={i}
                           id={`Shape-${i}`}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
+                          // x={
+                          //   others?.width
+                          //     ? others?.width / 2
+                          //     : boundary.width / 2
+                          // }
+                          // y={
+                          //   others?.height
+                          //     ? others?.height / 2
+                          //     : boundary.height / 2
+                          // }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           numPoints={others?.numPoints ?? 5}
@@ -1084,7 +1063,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -1093,16 +1072,18 @@ function App() {
                         <Line
                           key={i}
                           id={`Shape-${i}`}
-                          x={
-                            others?.width
-                              ? others?.width / 2
-                              : boundary.width / 2
-                          }
-                          y={
-                            others?.height
-                              ? others?.height / 2
-                              : boundary.height / 2
-                          }
+                          // x={
+                          //   others?.width
+                          //     ? others?.width / 2
+                          //     : boundary.width / 2
+                          // }
+                          // y={
+                          //   others?.height
+                          //     ? others?.height / 2
+                          //     : boundary.height / 2
+                          // }
+                          x={boundary.width / 2 + others.width / 2}
+                          y={boundary.height / 2 + others.height / 2}
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           points={others?.point ?? [5, 5, 70, 5]}
@@ -1123,7 +1104,7 @@ function App() {
                           draggable={!shape.locked}
                           onDragEnd={(e) => {
                             handleSavePositions(e, i);
-                            handleDragEnd(e);
+                            handleDragEnd(e, item);
                           }}
                         />
                       );
@@ -1131,134 +1112,6 @@ function App() {
                       return <></>;
                   }
                 })}
-
-                {texts.map((text, i) => (
-                  <React.Fragment key={i}>
-                    <Text
-                      key={i}
-                      id={`text-${i}`}
-                      {...text}
-                      // wrap={true}
-                      wrap="char"
-                      draggable={!text.locked}
-                      onClick={() => {
-                        setSelectedTextIndex(i);
-                        setSelectedImageIndex(null);
-                        setSelectedShapeIndex(null);
-                        setIsTextBoxVisible(true);
-                      }}
-                      align="center"
-                      onTap={() => {
-                        setSelectedTextIndex(i);
-                        setSelectedShapeIndex(null);
-                        setSelectedImageIndex(null);
-                      }}
-                      // offsetX={text.width / 2}
-                      // offsetY={text.height / 2}
-                      onDragEnd={handleTextDragEnd}
-                      // onDragEnd={(e) => {
-                      //   const newPosition = checkTextBounds(text, e.target);
-                      //   const newTexts = texts.slice();
-                      //   newTexts[i] = {
-                      //     ...newTexts[i],
-                      //     ...newPosition,
-                      //   };
-                      //   // console.log("start :", {
-                      //     newPosition,
-                      //     newTexts,
-                      //   });
-                      //   setTexts(newTexts);
-                      // }}
-                      // onTransformEnd={(e) => {
-                      //   const newPosition = checkTextBounds(text, e.target);
-                      //   const newTexts = texts.slice();
-                      //   newTexts[i] = {
-                      //     ...newTexts[i],
-                      //     ...newPosition,
-                      //     width: e.target.width(),
-                      //     height: e.target.height(),
-                      //   };
-                      //   // console.log("stop :", {
-                      //     newPosition,
-                      //     newTexts,
-                      //   });
-                      //   setTexts(newTexts);
-                      // }}
-                    />
-                  </React.Fragment>
-                ))}
-                {images.map((image, index) => (
-                  <React.Fragment key={index}>
-                    <Image
-                      image={image.image}
-                      id={`Image-${index}`}
-                      // width={image.width / 2}
-                      // height={image.height / 2}
-                      // offsetX={image.width - 10}
-                      // offsetY={50}
-                      // offsetX={image.width / 2}
-                      // offsetY={image.height / 2}
-                      // rotation={image.rotation}
-                      {...image}
-                      // x={0}
-                      // y={0}
-                      // offsetX={image.width / 7}
-                      // offsetY={image.height / 7}
-                      draggable={!image.locked}
-                      // onDragEnd={(e) => {
-                      //   handleUpdateImage(index, {
-                      //     x: e.target.x(),
-                      //     y: e.target.y(),
-                      //   });
-                      // }}
-                      onDragEnd={handleDragEnd}
-                      //
-                      // onDragEnd={(e) => {
-                      //   const newPosition = checkTextBounds(image, e.target);
-                      //   const newImages = images.slice();
-                      //   newImages[index] = {
-                      //     ...newImages[index],
-                      //     ...newPosition,
-                      //   };
-                      //   // console.log("start :", { newPosition, newImages });
-                      //   setImages(newImages);
-                      // }}
-                      // onTransformEnd={(e) => {
-                      //   const newPosition = checkTextBounds(image, e.target);
-                      //   const newImages = texts.slice();
-                      //   newImages[index] = {
-                      //     ...newImages[index],
-                      //     ...newPosition,
-                      //     width: e.target.width(),
-                      //     height: e.target.height(),
-                      //   };
-                      //   // console.log("stop :", { newPosition, newImages });
-                      //   setImages(newImages);
-                      // }}
-                      // onTransformEnd={(e) => {
-                      //   const node = e.target;
-                      //   const scaleX = node.scaleX();
-                      //   const scaleY = node.scaleY();
-
-                      //   const newWidth = Math.max(5, node.width() * scaleX);
-                      //   const newHeight = Math.max(5, node.height() * scaleY);
-
-                      //   handleUpdateImage(index, {
-                      //     x: node.x(),
-                      //     y: node.y(),
-                      //     width: newWidth,
-                      //     height: newHeight,
-                      //   });
-                      // }}
-                      onClick={() => {
-                        // console.log({ index });
-                        setSelectedImageIndex(index);
-                        setSelectedTextIndex(null);
-                        setSelectedShapeIndex(null);
-                      }}
-                    />
-                  </React.Fragment>
-                ))}
 
                 <Transformer
                   ref={transformerRef}
@@ -1270,7 +1123,6 @@ function App() {
                       : false
                   }
                   resizeEnabled={true}
-                  // centeredScaling={true}
                   rotateAnchorOffset={10}
                   anchorFill={"rgb(0, 161, 255)"}
                   anchorSize={4}
@@ -1292,8 +1144,6 @@ function App() {
             </Stage>
           </div>
         </div>
-        {/* </TransformComponent>
-        </TransformWrapper> */}
       </div>
       {/* toolbar footer */}
       <div className="bg-black/30 p-5 w-full fixed bottom-0 left-0">
@@ -1302,44 +1152,14 @@ function App() {
             min={50}
             max={150}
             defaultValue={100}
-            // value={scaleZoom}
-            // handle={(props) => <div {...props}></div>}
             onChange={(value) => {
               setScaleZoom(value + "%");
             }}
-            // onChange={(value) => setScale(`${value * 2}%`)}
           />
         </div>
-        {/* <div className="tools">
-          <button onClick={() => zoomIn()}>+</button>
-          <button onClick={() => zoomOut()}>-</button>
-          <button onClick={() => resetTransform()}>x</button>
-        </div> */}
       </div>
     </>
   );
 }
-
-// const Board = () => {
-//   const { zoomIn, zoomOut, resetTransform } = useControls();
-//   return (
-//     <TransformWrapper
-//       initialScale={1}
-//       initialPositionX={200}
-//       initialPositionY={100}
-//     >
-//       {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
-//         <>
-//           <button onClick={() => zoomIn()}>+</button>
-//           <button onClick={() => zoomOut()}>-</button>
-//           <button onClick={() => resetTransform()}>x</button>
-//           <TransformComponent>
-//             <div>Example text</div>
-//           </TransformComponent>
-//         </>
-//       )}
-//     </TransformWrapper>
-//   );
-// };
 
 export default App;
