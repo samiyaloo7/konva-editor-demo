@@ -40,11 +40,12 @@ function App() {
   const [isTextBoxVisible, setIsTextBoxVisible] = useState(false);
   const [scaleZoom, setScaleZoom] = useState("100%");
   const [showChangeSize, setShowChangeSize] = useState(false);
+  // const [itemInfo,]
   const [boundary, setBoundary] = useState({
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100,
+    x: 500,
+    y: 900,
+    width: 150,
+    height: 150,
   });
 
   const [scale, setScale] = useState(1);
@@ -52,27 +53,28 @@ function App() {
 
   const transformerRef = useRef(null);
   const stageRef = useRef(null);
+  const targetImageRef = useRef(null);
 
   const offsetX = 10;
   const offsetY = 10;
   const checkBoundaries = (node) => {
     const { x, y, width, height } = node.getClientRect();
     const stage = stageRef.current;
-    console.log("==============", stage);
-    console.log(x, boundary.x, width, boundary.width);
+    // console.log("==============", stage);
+    // console.log(x, boundary.x, width, boundary.width);
 
-    // console.log(x >= boundary.x && x + width <= boundary.x + boundary.width);
-    // console.log(y >= boundary.y && y + height <= boundary.y + boundary.height);
+    // // console.log(x >= boundary.x && x + width <= boundary.x + boundary.width);
+    // // console.log(y >= boundary.y && y + height <= boundary.y + boundary.height);
 
-    const withinX = x >= boundary.x && x + width <= boundary.x + boundary.width;
-    const withinY =
-      y >= boundary.y && y + height <= boundary.y + boundary.height;
+    const withinX = x >= 0 && x + width <= 0 + boundary.width;
+    const withinY = y >= 0 && y + height <= 0 + boundary.height;
+
     return withinX && withinY;
   };
 
   const handleTextDragEnd = (e) => {
     const node = e.target;
-    console.log(node.width(), boundary.width);
+    // console.log(node.width(), boundary.width);
     if (!checkBoundaries(node)) {
       node.to({
         x: boundary.width / 2 - node.width() / 2,
@@ -90,6 +92,8 @@ function App() {
         // y: boundary.y,
         x: boundary.width / 2,
         y: boundary.height / 2,
+        // x: -10,
+        // y: -10,
         duration: 0.5,
       });
     }
@@ -128,7 +132,7 @@ function App() {
       ...newShape[index],
       [key]: value,
     };
-    console.log({ newShape });
+    // console.log({ newShape });
     setShapes(newShape);
   };
 
@@ -156,11 +160,11 @@ function App() {
           .filter((style) => style !== property)
           .join(" ");
       } else {
-        console.log("newTexts[index].fontStyle, currentStyles, property");
-        // console.log(newTexts[index].fontStyle, currentStyles, property);
-        console.log(newTexts[index]);
-        console.log(currentStyles);
-        console.log(property);
+        // console.log("newTexts[index].fontStyle, currentStyles, property");
+        // // console.log(newTexts[index].fontStyle, currentStyles, property);
+        // console.log(newTexts[index]);
+        // console.log(currentStyles);
+        // console.log(property);
         newTexts[index].fontStyle = [...currentStyles, property].join(" ");
         newTexts[index].wrap = true;
       }
@@ -240,7 +244,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log({ selectedShapeIndex });
+    // console.log({ selectedShapeIndex });
     if (selectedTextIndex !== null) {
       const selectedNode = stageRef.current.findOne(
         `#text-${selectedTextIndex}`
@@ -272,15 +276,29 @@ function App() {
     reader.onload = () => {
       const img = new window.Image();
       img.src = reader.result;
+      console.log(" ===== ");
+      console.log(
+        e.target.files[0]
+        // Math.pow(10, String(img.width)?.length - 2),
+        // img.width / Math.pow(10, String(img.width)?.length - 2)
+      );
       img.onload = () => {
         setImages([
           ...images,
           {
             image: img,
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 100,
+            x: 10,
+            y: 10,
+            width: 80,
+            height: 80,
+            // width:
+            //   String(img.width)?.length > 2
+            //     ? img.width / Math.pow(10, String(img.width)?.length - 2)
+            //     : img.width,
+            // height:
+            //   String(img.height)?.length > 2
+            //     ? img.height / Math.pow(10, String(img.height)?.length - 2)
+            //     : img.height,
             rotation: 0,
             locked: false,
           },
@@ -382,10 +400,16 @@ function App() {
       item: selectedShape,
       // y: 50,
       // x: 50,
+      x: boundary.width / 2,
+      y: boundary.height / 2,
       width: 30,
       height: 30,
       fill: "black",
     };
+
+    if (selectedShape === "arrow") {
+      shapeProps.point = [0, 50, 50, 50];
+    }
 
     setShapes((prev) => [
       ...prev,
@@ -419,10 +443,79 @@ function App() {
   const handleGraphicsClick = (e) => {};
 
   const handleDeleteShape = (index) => {
+    console.log("shape index to delete", index);
     // const filteredShapes = shapes.filter((_, i) => i !== index);
-    // console.log({ filteredShapes }, index);
+    // // console.log({ filteredShapes }, index);
     // setShapes(filteredShapes);
-    setShapes((prevShapes) => prevShapes.filter((_, i) => i !== index));
+    console.log("shapes ==============");
+    console.log(shapes);
+    setShapes((prevShapes) => {
+      // const test = prevShapes.filter((_, i) => i !== index);
+      const test = prevShapes.map((shape, i) => {
+        if (["line"].includes(shapes[index]?.item))
+          return i === index
+            ? { ...shape, point: [], x: 1, y: 1, height: 1, width: 1 }
+            : shape;
+        if (["star"].includes(shapes[index]?.item))
+          return i === index
+            ? {
+                ...shape,
+                numPoints: 0,
+                innerRadius: 0,
+                outerRadius: 0,
+                x: 1,
+                y: 1,
+                height: 1,
+                width: 1,
+              }
+            : shape;
+        if (["arrow"].includes(shapes[index]?.item))
+          return i === index
+            ? {
+                ...shape,
+                pointerLength: 0,
+                pointerWidth: 0,
+                point: [0, 0, 0, 0],
+                // x: -100,
+                // y: -100,
+
+                deleted: true,
+                height: 1,
+                width: 1,
+              }
+            : shape;
+        if (["two-sided-arrow"].includes(shapes[index]?.item))
+          return i === index
+            ? {
+                ...shape,
+                sceneFunc: true,
+                x: 1,
+                y: 1,
+                height: 1,
+                width: 1,
+                strokeWidth: 0,
+              }
+            : shape;
+        else if (["polygon", "triangle"].includes(shapes[index]?.item))
+          return i === index
+            ? {
+                ...shape,
+                radius: 1,
+                sides: 1,
+                x: 1,
+                y: 1,
+                height: 1,
+                width: 1,
+              }
+            : shape;
+        else
+          return i === index
+            ? { ...shape, x: 1, y: 1, height: 1, width: 1 }
+            : shape;
+      });
+      console.log(test);
+      return test;
+    });
     setSelectedShapeIndex(null);
   };
 
@@ -454,7 +547,7 @@ function App() {
       ...newTexts[index],
       locked: !newTexts[index].locked,
     };
-    console.log({ lock: newTexts[index].locked });
+    // console.log({ lock: newTexts[index].locked });
     if (newTexts[index].locked) {
       transformerRef.current.nodes([]);
     } else {
@@ -465,6 +558,26 @@ function App() {
     setShapes(newTexts);
   };
 
+  const handleSavePositions = (e, i) => {
+    const tempShapes = [];
+
+    shapes.forEach((element, idx) => {
+      // if (element.id === `Shape-${i}`) {
+      if (idx === i) {
+        console.log("odd : ", element);
+        tempShapes.push({
+          ...element,
+          x: e.target.x(),
+          y: e.target.y(),
+        });
+      } else {
+        console.log("normal : ", element);
+        tempShapes.push(element);
+      }
+    });
+    setShapes(tempShapes);
+  };
+
   useEffect(() => {
     const stage = stageRef.current;
     stage.scale({ x: scale, y: scale });
@@ -472,8 +585,30 @@ function App() {
     stage.batchDraw();
   }, [scale, stagePos]);
 
-  console.log({ selectedImageIndex });
-  console.log({ shapes });
+  const refreshStage = () => {
+    setBoundary((prev) => ({
+      ...prev,
+      x: (targetImageRef.current.height * 500) / 1534,
+      y: (targetImageRef.current.width * 900) / 1534,
+      height: (targetImageRef.current.height * 150) / 1534,
+      width: (targetImageRef.current.width * 150) / 1534,
+    }));
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", refreshStage, true);
+
+    return () => {
+      window.removeEventListener("resize", refreshStage);
+    };
+  }, []);
+
+  // console.log({ selectedImageIndex });
+  // console.log({ shapes });
+
+  // console.log({ texts, images, shapes });
+  // console.log({ shapes });
+  console.log("selected shape : ", selectedShapeIndex);
 
   return (
     <>
@@ -620,8 +755,8 @@ function App() {
             // zoom: scaleZoom,
           }}
         >
-          <div className="">
-            <img src={backgroundImg} alt="" />
+          <div className="relative">
+            <img ref={targetImageRef} src={backgroundImg} alt="" />
             <Stage
               width={boundary.width}
               height={boundary.height}
@@ -630,8 +765,12 @@ function App() {
               style={{
                 position: "absolute",
                 // top: "60%",
-                top: "500px",
-                left: "58%",
+                // top: "500px",
+                // left: "58%",
+                top: boundary.x + "px",
+                left: boundary.y + "px",
+                // maxWidth: "20vw",
+                // maxHeight: "20vh",
                 transform: "translate(-46.5%,-50%)",
                 border: "1px solid #08867F",
               }}
@@ -641,7 +780,11 @@ function App() {
               <Layer>
                 {shapes?.map((shape, i) => {
                   const { item, ...others } = shape;
-                  console.log(item, others);
+                  // console.log(item, others);
+                  // shapes?.[i]?.x = boundary.width / 2
+
+                  console.log({ others });
+
                   switch (item) {
                     case "rect":
                       return (
@@ -649,8 +792,16 @@ function App() {
                           key={i}
                           id={`Shape-${i}`}
                           {...others}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -664,7 +815,10 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
                       );
                     case "round":
@@ -673,8 +827,16 @@ function App() {
                           key={i}
                           id={`Shape-${i}`}
                           {...others}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -688,7 +850,10 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
                       );
                     case "triangle":
@@ -696,12 +861,20 @@ function App() {
                         <RegularPolygon
                           key={i}
                           id={`Shape-${i}`}
-                          sides={3}
-                          radius={15}
+                          sides={others?.sides ?? 3}
+                          radius={others?.radius ?? 15}
                           fill={others.fill}
                           rotation={0}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -715,64 +888,60 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
-                        // <Shape
-                        //   key={i}
-                        //   id={`Shape-${i}`}
-                        //   x={boundary.width / 2}
-                        //   y={boundary.height / 2}
-                        //   offsetX={others.width / 2}
-                        //   offsetY={others.height / 2}
-                        //   sceneFunc={(context, shape) => {
-                        //     context.beginPath();
-                        //     context.moveTo(25, 10);
-                        //     context.lineTo(10, 50 - 10);
-                        //     context.lineTo(50 - 10, 50 - 10);
-                        //     context.closePath();
-                        //     context.fillStrokeShape(shape);
-                        //   }}
-                        //   fill={others.fill}
-                        //   stroke={others.fill}
-                        //   strokeWidth={4}
-                        //   onClick={() => {
-                        //     setSelectedTextIndex(null);
-                        //     setSelectedImageIndex(null);
-                        //     setSelectedShapeIndex(i);
-                        //   }}
-                        //   onTap={() => {
-                        //     setSelectedTextIndex(null);
-                        //     setSelectedImageIndex(null);
-                        //     setSelectedShapeIndex(i);
-                        //   }}
-                        //   draggable={!shape.locked}
-                        // />
                       );
                     case "two-sided-arrow":
                       return (
                         <Shape
                           key={i}
                           id={`Shape-${i}`}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
-                          sceneFunc={(context, shape) => {
-                            context.beginPath();
-                            context.moveTo(0, 0);
-                            context.lineTo(15, 0);
-                            context.lineTo(15, -10);
-                            context.lineTo(30, 0);
-                            context.lineTo(15, 10);
-                            context.lineTo(15, 0);
-                            context.lineTo(-15, 0);
-                            context.lineTo(-15, -10);
-                            context.lineTo(-30, 0);
-                            context.lineTo(-15, 10);
-                            context.lineTo(-15, 0);
-                            context.closePath();
-                            context.fillStrokeShape(shape);
-                          }}
+                          // height={others?.sceneFunc ? 0 : others.height}
+                          // width={others?.width ? 0 : others.width}
+                          // height={others?.sceneFunc ? 0 : others.height}
+                          // width={others?.sceneFunc ? 0 : others.width}
+                          height={0}
+                          width={0}
+                          sceneFunc={
+                            others?.sceneFunc
+                              ? (context, shape) => {
+                                  context.beginPath();
+                                  context.moveTo(0, 0);
+                                  context.closePath();
+                                  context.fillStrokeShape(shape);
+                                }
+                              : (context, shape) => {
+                                  context.beginPath();
+                                  context.moveTo(0, 0);
+                                  context.lineTo(15, 0);
+                                  context.lineTo(15, -10);
+                                  context.lineTo(30, 0);
+                                  context.lineTo(15, 10);
+                                  context.lineTo(15, 0);
+                                  context.lineTo(-15, 0);
+                                  context.lineTo(-15, -10);
+                                  context.lineTo(-30, 0);
+                                  context.lineTo(-15, 10);
+                                  context.lineTo(-15, 0);
+                                  context.closePath();
+                                  context.fillStrokeShape(shape);
+                                }
+                          }
                           fill={others.fill}
                           stroke={others.fill}
                           strokeWidth={4}
@@ -787,7 +956,10 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
                       );
                     case "polygon":
@@ -795,12 +967,20 @@ function App() {
                         <RegularPolygon
                           key={i}
                           id={`Shape-${i}`}
-                          sides={5}
-                          radius={15}
+                          sides={others?.sides ?? 5}
+                          radius={others?.radius ?? 15}
                           fill={others.fill}
                           rotation={0}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -814,7 +994,10 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
                       );
                     case "arrow":
@@ -822,16 +1005,30 @@ function App() {
                         <Arrow
                           key={i}
                           id={`Shape-${i}`}
-                          points={[0, 50, 50, 50]}
-                          pointerLength={20}
-                          pointerWidth={20}
+                          // points={[0, 0, 0, 0]}
+                          // pointerLength={0}
+                          // pointerWidth={0}
+                          points={
+                            others?.deleted ? [0, 0, 0, 0] : [0, 50, 50, 50]
+                          } //
+                          pointerLength={others?.deleted ? 0 : 20}
+                          pointerWidth={others?.deleted ? 0 : 20}
+                          // points={others?.points} // [0, 50, 50, 50]
+                          // pointerLength={others?.pointerLength}
+                          // pointerWidth={others?.pointerWidth}
                           fill={others.fill}
                           stroke={others.fill}
                           strokeWidth={4}
-                          // x={0}
-                          // y={0}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
                           onClick={() => {
@@ -844,7 +1041,10 @@ function App() {
                             setSelectedImageIndex(null);
                             setSelectedShapeIndex(i);
                           }}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                           draggable={!shape.locked}
                         />
                       );
@@ -853,15 +1053,21 @@ function App() {
                         <Star
                           key={i}
                           id={`Shape-${i}`}
-                          // x={0}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
-                          // y={0}
-                          numPoints={5}
-                          innerRadius={15}
-                          outerRadius={30}
+                          numPoints={others?.numPoints ?? 5}
+                          innerRadius={others?.innerRadius ?? 10}
+                          outerRadius={others?.outerRadius ?? 20}
                           fill={others.fill}
                           stroke={others.fill}
                           strokeWidth={4}
@@ -876,7 +1082,10 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
                       );
                     case "line":
@@ -884,13 +1093,19 @@ function App() {
                         <Line
                           key={i}
                           id={`Shape-${i}`}
-                          // x={0}
-                          x={boundary.width / 2}
-                          y={boundary.height / 2}
+                          x={
+                            others?.width
+                              ? others?.width / 2
+                              : boundary.width / 2
+                          }
+                          y={
+                            others?.height
+                              ? others?.height / 2
+                              : boundary.height / 2
+                          }
                           offsetX={others.width / 2}
                           offsetY={others.height / 2}
-                          // y={0}
-                          points={[5, 5, 70, 5]}
+                          points={others?.point ?? [5, 5, 70, 5]}
                           stroke={others.fill}
                           strokeWidth={3}
                           lineCap={"round"}
@@ -906,32 +1121,17 @@ function App() {
                             setSelectedShapeIndex(i);
                           }}
                           draggable={!shape.locked}
-                          onDragEnd={handleDragEnd}
+                          onDragEnd={(e) => {
+                            handleSavePositions(e, i);
+                            handleDragEnd(e);
+                          }}
                         />
                       );
                     default:
                       return <></>;
                   }
                 })}
-                {/* <Rect
-                  x={0}
-                  y={0}
-                  width={50}
-                  height={50}
-                  fill="black"
-                  draggable
-                /> */}
 
-                {/* <Circle
-                  x={0}
-                  y={0}
-                  width={50}
-                  height={50}
-                  fill="black"
-                  draggable
-                /> */}
-
-                {/* <RectShape /> */}
                 {texts.map((text, i) => (
                   <React.Fragment key={i}>
                     <Text
@@ -963,7 +1163,7 @@ function App() {
                       //     ...newTexts[i],
                       //     ...newPosition,
                       //   };
-                      //   console.log("start :", {
+                      //   // console.log("start :", {
                       //     newPosition,
                       //     newTexts,
                       //   });
@@ -978,7 +1178,7 @@ function App() {
                       //     width: e.target.width(),
                       //     height: e.target.height(),
                       //   };
-                      //   console.log("stop :", {
+                      //   // console.log("stop :", {
                       //     newPosition,
                       //     newTexts,
                       //   });
@@ -1020,7 +1220,7 @@ function App() {
                       //     ...newImages[index],
                       //     ...newPosition,
                       //   };
-                      //   console.log("start :", { newPosition, newImages });
+                      //   // console.log("start :", { newPosition, newImages });
                       //   setImages(newImages);
                       // }}
                       // onTransformEnd={(e) => {
@@ -1032,7 +1232,7 @@ function App() {
                       //     width: e.target.width(),
                       //     height: e.target.height(),
                       //   };
-                      //   console.log("stop :", { newPosition, newImages });
+                      //   // console.log("stop :", { newPosition, newImages });
                       //   setImages(newImages);
                       // }}
                       // onTransformEnd={(e) => {
@@ -1051,7 +1251,7 @@ function App() {
                       //   });
                       // }}
                       onClick={() => {
-                        console.log({ index });
+                        // console.log({ index });
                         setSelectedImageIndex(index);
                         setSelectedTextIndex(null);
                         setSelectedShapeIndex(null);
@@ -1104,7 +1304,9 @@ function App() {
             defaultValue={100}
             // value={scaleZoom}
             // handle={(props) => <div {...props}></div>}
-            onChange={(value) => setScaleZoom(value + "%")}
+            onChange={(value) => {
+              setScaleZoom(value + "%");
+            }}
             // onChange={(value) => setScale(`${value * 2}%`)}
           />
         </div>
