@@ -29,24 +29,6 @@ import GraphicsPopOver from "./components/pop-overs/GraphicsPopOver";
 import ShapeEditor from "./components/ShapeEditor";
 import SizeDrawer from "./components/SizeDrawer";
 
-const initialPos = {
-  arrow: {
-    x: 50,
-    y: 30,
-  },
-};
-
-const draggedPos = {
-  arrow: {
-    x: 50,
-    y: 30,
-  },
-  rect: {
-    x: 50,
-    y: 50,
-  },
-};
-
 function App() {
   const [texts, setTexts] = useState([]);
   const [images, setImages] = useState([]);
@@ -209,6 +191,12 @@ function App() {
       ...newTexts[index],
       locked: !newTexts[index].locked,
     };
+    if (newTexts[index].locked) {
+      transformerRef.current.nodes([]);
+    } else {
+      const selectedNode = stageRef.current.findOne(`#text-${index}`);
+      transformerRef.current.nodes([selectedNode]);
+    }
     setTexts(newTexts);
   };
 
@@ -246,22 +234,19 @@ function App() {
       img.src = reader.result;
 
       img.onload = () => {
+        const ratio = Math.min(
+          (boundary.width - 5) / img.width,
+          (boundary.height - 5) / img.height
+        );
+
         setImages([
           ...images,
           {
             image: img,
             x: 10,
             y: 10,
-            width: 80,
-            height: 80,
-            // width:
-            //   String(img.width)?.length > 2
-            //     ? img.width / Math.pow(10, String(img.width)?.length - 2)
-            //     : img.width,
-            // height:
-            //   String(img.height)?.length > 2
-            //     ? img.height / Math.pow(10, String(img.height)?.length - 2)
-            //     : img.height,
+            width: img.width * ratio,
+            height: img.height * ratio,
             rotation: 0,
             locked: false,
           },
@@ -293,6 +278,13 @@ function App() {
       ...newImages[index],
       locked: !newImages[index].locked,
     };
+    if (newImages[index].locked) {
+      transformerRef.current.nodes([]);
+    } else {
+      const selectedNode = stageRef.current.findOne(`#Image-${index}`);
+      transformerRef.current.nodes([selectedNode]);
+    }
+    transformerRef.current.getLayer().batchDraw();
     setImages(newImages);
   };
 
@@ -323,41 +315,11 @@ function App() {
   const bringToTop = (target) => {
     const targetItem = itemIndex + 1;
 
-    // `#text-${selectedTextIndex}`
-    // `#${target}-${targetItem}`
-    // const selectedNode =
-
-    console.log("target - targetItem", target, targetItem);
-
     setTimeout(() => {
       console.log(`#${target}-${targetItem}`);
       stageRef?.current?.findOne(`#${target}-${targetItem}`)?.moveToTop();
       setItemIndex(targetItem);
     }, 2000);
-    // selectedNode.moveToTop();
-
-    // if (selectedTextIndex !== null) {
-    //   const selectedNode = stageRef.current.findOne(
-    //     `#text-${selectedTextIndex}`
-    //   );
-    //   transformerRef.current.nodes([selectedNode]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // } else if (selectedImageIndex !== null) {
-    //   const selectedNode = stageRef.current.findOne(
-    //     `#Image-${selectedImageIndex}`
-    //   );
-    //   transformerRef.current.nodes([selectedNode]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // } else if (selectedShapeIndex !== null) {
-    //   const selectedNode = stageRef.current.findOne(
-    //     `#Shape-${selectedShapeIndex}`
-    //   );
-    //   transformerRef.current.nodes([selectedNode]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // } else {
-    //   transformerRef.current.nodes([]);
-    //   transformerRef.current.getLayer().batchDraw();
-    // }
   };
 
   const addShape = (selectedShape) => {
@@ -557,8 +519,6 @@ function App() {
     };
   }, []);
 
-  console.log("shapes : ", shapes);
-
   return (
     <>
       <Header
@@ -713,10 +673,9 @@ function App() {
                       onDragEnd={(e) => {
                         handleDragEnd(e, "image");
                       }}
-                      x={boundary.width / 4}
-                      y={boundary.height / 4}
+                      x={(boundary.width - image.width) / 2}
+                      Y={(boundary.height - image.height) / 2}
                       onClick={() => {
-                        // console.log({ index });
                         setSelectedImageIndex(index);
                         setSelectedTextIndex(null);
                         setSelectedShapeIndex(null);
@@ -730,7 +689,6 @@ function App() {
                       key={i}
                       id={`text-${i}`}
                       {...text}
-                      // wrap={true}
                       wrap="char"
                       draggable={!text.locked}
                       onClick={() => {
